@@ -1,0 +1,15 @@
+[package]
+name = "webhook"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.86"
+axum = "0.7.5"
+figment = { version = "0.10.19", features = ["yaml", "toml", "json"] }
+serde = { version = "1.0.204", features = ["derive"] }
+tokio = { version = "1.39.1", features = ["full"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tower-http = { version = "0.5", features = ["trace"] }
+base64 = "0.22.1"

@@ -1,0 +1,14 @@
+[Unit]
+Description=webhook service
+After=network.target auditd.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/webhook
+WorkingDirectory=/etc/webhook
+KillMode=process
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+Alias=minicd.service
