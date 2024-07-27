@@ -10,5 +10,5 @@ KillMode=process
 Restart=always
 
 [Install]
-WantedBy=multi-user.target
-Alias=minicd.service
+WantedBy=default.target
+Alias=webhook.service
