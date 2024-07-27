@@ -39,8 +39,9 @@ pub struct BearerAuth {
 
 #[derive(Deserialize)]
 pub struct Hook {
-    pub auth: Option<Vec<String>>,
     pub command: String,
+    pub method: Option<String>,
+    pub auth: Option<Vec<String>>,
     pub args: Option<Vec<String>>,
     pub env: Option<HashMap<String, String>>,
 }

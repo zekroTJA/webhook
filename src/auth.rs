@@ -73,9 +73,7 @@ pub fn check_auth(
                     ref password,
                 } = token
                 {
-                    if dbg!(&basic_auth.username) == dbg!(username)
-                        && dbg!(&basic_auth.password) == dbg!(password)
-                    {
+                    if &basic_auth.username == username && &basic_auth.password == password {
                         return Ok(());
                     }
                 };

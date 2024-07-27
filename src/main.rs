@@ -6,9 +6,9 @@ use auth::{check_auth, AuthenticationToken};
 use axum::{
     body::Body,
     extract::{Path, State},
-    http::{HeaderMap, StatusCode},
+    http::{HeaderMap, Method, StatusCode},
     response::{IntoResponse, Response},
-    routing::get,
+    routing::{any, get},
     Json, Router,
 };
 use config::Config;
@@ -38,7 +38,7 @@ async fn main() -> anyhow::Result<()> {
 
     let config_state = Arc::new(config);
     let app = Router::new()
-        .route("/*path", get(handler))
+        .route("/*path", any(handler))
         .with_state(config_state)
         .layer(TraceLayer::new_for_http());
 
@@ -55,6 +55,7 @@ enum ResponseError {
     BadRequest(String),
     Unauthorized,
     InternalServerError(String),
+    MethodNotAllowed,
 }
 
 impl IntoResponse for ResponseError {
@@ -76,18 +77,29 @@ impl IntoResponse for ResponseError {
                 .status(StatusCode::UNAUTHORIZED)
                 .body(Body::empty())
                 .unwrap(),
+            Self::MethodNotAllowed => Response::builder()
+                .status(StatusCode::METHOD_NOT_ALLOWED)
+                .body(Body::empty())
+                .unwrap(),
         }
     }
 }
 
 async fn handler(
     Path(path): Path<String>,
+    method: Method,
     State(config): State<Arc<Config>>,
     header: HeaderMap,
 ) -> Result<Json<CommandResult>, ResponseError> {
     let Some(hook) = config.hooks.get(path.trim_end_matches('/')) else {
         return Err(ResponseError::NotFound);
     };
+
+    if let Some(ref hook_method) = hook.method {
+        if hook_method != method.as_str() {
+            return Err(ResponseError::MethodNotAllowed);
+        }
+    }
 
     if let Some(ref auth_keys) = hook.auth {
         let auth_value: Option<AuthenticationToken> = header
