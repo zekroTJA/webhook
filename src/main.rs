@@ -11,23 +11,38 @@ use axum::{
     routing::any,
     Json, Router,
 };
-use config::{Config, ParseFromFile};
+use clap::Parser;
+use config::{DynamicConfig, Loader, ParseFromFile, StaticConfig};
 use model::CommandResult;
-use std::{process::Command, sync::Arc};
+use std::{
+    path::PathBuf,
+    process::Command,
+    sync::{Arc, RwLock},
+};
 use tower_http::trace::TraceLayer;
+
+#[derive(Parser)]
+#[command(author, version, about, long_about = None)]
+struct Cli {
+    /// Path to the static config file
+    #[arg(short, long, default_value = "config.yaml")]
+    static_conf: PathBuf,
+
+    /// Path to the dynamic config file
+    #[arg(short, long, default_value = "dynamic.yaml")]
+    dynamic_conf: PathBuf,
+}
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let config_path = std::env::args()
-        .nth(1)
-        .unwrap_or_else(|| "config.yaml".into());
+    let cli = Cli::parse();
 
     tracing_subscriber::fmt()
         .with_max_level(tracing::Level::DEBUG)
         .with_writer(std::io::stderr)
         .init();
 
-    let config = Config::from_file(config_path)?;
+    let config = StaticConfig::from_file(cli.static_conf)?;
 
     let server_address = config
         .server
@@ -36,10 +51,12 @@ async fn main() -> anyhow::Result<()> {
         .cloned()
         .unwrap_or_else(|| "0.0.0.0:8080".to_string());
 
-    let config_state = Arc::new(config);
+    let loader: Loader<DynamicConfig> = Loader::new(cli.dynamic_conf)?;
+    let loader = Arc::new(RwLock::new(loader));
+
     let app = Router::new()
         .route("/*path", any(handler))
-        .with_state(config_state)
+        .with_state(loader)
         .layer(TraceLayer::new_for_http());
 
     tracing::info!("Server listening on {server_address} ...");
@@ -88,10 +105,15 @@ impl IntoResponse for ResponseError {
 async fn handler(
     Path(path): Path<String>,
     method: Method,
-    State(config): State<Arc<Config>>,
+    State(config): State<Arc<RwLock<Loader<DynamicConfig>>>>,
     header: HeaderMap,
 ) -> Result<Json<CommandResult>, ResponseError> {
-    let Some(hook) = config.hooks.get(path.trim_end_matches('/')) else {
+    let mut cfg = config.write().expect("mtx unlock");
+    let cfg = cfg
+        .get()
+        .map_err(|e| ResponseError::InternalServerError(e.to_string()))?;
+
+    let Some(hook) = cfg.hooks.get(path.trim_end_matches('/')) else {
         return Err(ResponseError::NotFound);
     };
 
@@ -115,7 +137,7 @@ async fn handler(
                 }
             }
             Some(auth_value) => {
-                check_auth(auth_keys, &config, auth_value)?;
+                check_auth(auth_keys, cfg, auth_value)?;
             }
         }
     }

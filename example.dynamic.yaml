@@ -1,0 +1,24 @@
+auth:
+  foo:
+    type: basic
+    username: foo
+    password: bar
+  bar:
+    type: bearer
+    token: bar
+
+hooks:
+  hello/world:
+    command: "bash"
+    args:
+      - ./test.sh
+    auth:
+      - foo
+      - bar
+
+  hello/hell:
+    command: "bash"
+    args:
+      - "hello world"
+    auth:
+      - bar

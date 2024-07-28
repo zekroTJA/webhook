@@ -1,5 +1,5 @@
 use crate::{
-    config::{Auth, Config},
+    config::{Auth, DynamicConfig},
     ResponseError,
 };
 use axum::http::HeaderValue;
@@ -56,7 +56,7 @@ fn basic_decode(v: &str) -> anyhow::Result<(String, String)> {
 
 pub fn check_auth(
     auth_keys: &[String],
-    config: &Config,
+    config: &DynamicConfig,
     token: AuthenticationToken,
 ) -> Result<(), ResponseError> {
     for auth_key in auth_keys {
