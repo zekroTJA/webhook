@@ -3,7 +3,7 @@ use figment::{
     providers::{Format, Json, Toml, Yaml},
     Figment,
 };
-use serde::Deserialize;
+use serde::{de::DeserializeOwned, Deserialize};
 use std::{collections::HashMap, ops::Deref, path::Path};
 
 #[derive(Deserialize)]
@@ -46,8 +46,14 @@ pub struct Hook {
     pub env: Option<HashMap<String, String>>,
 }
 
-impl Config {
-    pub fn from_file<T: AsRef<Path>>(path: T) -> Result<Self> {
+impl ParseFromFile for Config {}
+
+pub trait ParseFromFile {
+    fn from_file<P>(path: P) -> Result<Self>
+    where
+        P: AsRef<Path>,
+        Self: DeserializeOwned,
+    {
         let ext = path.as_ref().extension().unwrap_or_default();
 
         let mut figment = Figment::new();

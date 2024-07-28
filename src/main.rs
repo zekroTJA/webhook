@@ -11,7 +11,7 @@ use axum::{
     routing::any,
     Json, Router,
 };
-use config::Config;
+use config::{Config, ParseFromFile};
 use model::CommandResult;
 use std::{process::Command, sync::Arc};
 use tower_http::trace::TraceLayer;
