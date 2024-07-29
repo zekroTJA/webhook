@@ -14,11 +14,7 @@ use axum::{
 use clap::Parser;
 use config::{DynamicConfig, Loader, ParseFromFile, StaticConfig};
 use model::CommandResult;
-use std::{
-    path::PathBuf,
-    process::Command,
-    sync::{Arc, RwLock},
-};
+use std::{path::PathBuf, process::Command, sync::Arc};
 use tower_http::trace::TraceLayer;
 
 #[derive(Parser)]
@@ -52,7 +48,7 @@ async fn main() -> anyhow::Result<()> {
         .unwrap_or_else(|| "0.0.0.0:8080".to_string());
 
     let loader: Loader<DynamicConfig> = Loader::new(cli.dynamic_conf)?;
-    let loader = Arc::new(RwLock::new(loader));
+    let loader = Arc::new(loader);
 
     let app = Router::new()
         .route("/*path", any(handler))
@@ -105,11 +101,10 @@ impl IntoResponse for ResponseError {
 async fn handler(
     Path(path): Path<String>,
     method: Method,
-    State(config): State<Arc<RwLock<Loader<DynamicConfig>>>>,
+    State(config): State<Arc<Loader<DynamicConfig>>>,
     header: HeaderMap,
 ) -> Result<Json<CommandResult>, ResponseError> {
-    let mut cfg = config.write().expect("mtx unlock");
-    let cfg = cfg
+    let cfg = config
         .get()
         .map_err(|e| ResponseError::InternalServerError(e.to_string()))?;
 
@@ -137,7 +132,7 @@ async fn handler(
                 }
             }
             Some(auth_value) => {
-                check_auth(auth_keys, cfg, auth_value)?;
+                check_auth(auth_keys, &cfg, auth_value)?;
             }
         }
     }

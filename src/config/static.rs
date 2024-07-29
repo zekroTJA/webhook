@@ -1,6 +1,5 @@
-use serde::Deserialize;
-
 use super::ParseFromFile;
+use serde::Deserialize;
 
 #[derive(Deserialize)]
 pub struct StaticConfig {
