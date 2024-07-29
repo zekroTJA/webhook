@@ -60,7 +60,7 @@ pub fn check_auth(
     token: AuthenticationToken,
 ) -> Result<(), ResponseError> {
     for auth_key in auth_keys {
-        let Some(auth) = config.auth.get(auth_key) else {
+        let Some(auth) = config.auth.as_ref().and_then(|a| a.get(auth_key)) else {
             return Err(ResponseError::InternalServerError(format!(
                 "misconfigured hook auth: '{auth_key}' does not exist"
             )));

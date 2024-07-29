@@ -52,4 +52,9 @@ where
 
         Ok(state.value.clone())
     }
+
+    pub fn get_cached(&self) -> T {
+        let state = self.state.read().expect("mtx read unlock");
+        state.value.clone()
+    }
 }

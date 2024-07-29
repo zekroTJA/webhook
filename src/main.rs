@@ -16,6 +16,7 @@ use config::{DynamicConfig, Loader, ParseFromFile, StaticConfig};
 use model::CommandResult;
 use std::{path::PathBuf, process::Command, sync::Arc};
 use tower_http::trace::TraceLayer;
+use tracing::{debug, info};
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -48,6 +49,9 @@ async fn main() -> anyhow::Result<()> {
         .unwrap_or_else(|| "0.0.0.0:8080".to_string());
 
     let loader: Loader<DynamicConfig> = Loader::new(cli.dynamic_conf)?;
+
+    debug!("Loaded hooks:\n{}", loader.get_cached());
+
     let loader = Arc::new(loader);
 
     let app = Router::new()
@@ -55,7 +59,7 @@ async fn main() -> anyhow::Result<()> {
         .with_state(loader)
         .layer(TraceLayer::new_for_http());
 
-    tracing::info!("Server listening on {server_address} ...");
+    info!("Server listening on {server_address} ...");
 
     let listener = tokio::net::TcpListener::bind(server_address).await?;
     axum::serve(listener, app).await?;
