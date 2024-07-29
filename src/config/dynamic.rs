@@ -2,13 +2,13 @@ use super::ParseFromFile;
 use serde::Deserialize;
 use std::collections::HashMap;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 pub struct DynamicConfig {
     pub auth: HashMap<String, Auth>,
     pub hooks: HashMap<String, Hook>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 #[serde(tag = "type")]
 #[serde(rename_all = "lowercase")]
 pub enum Auth {
@@ -16,18 +16,18 @@ pub enum Auth {
     Bearer(BearerAuth),
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 pub struct BasicAuth {
     pub username: String,
     pub password: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 pub struct BearerAuth {
     pub token: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 pub struct Hook {
     pub command: String,
     pub method: Option<String>,
