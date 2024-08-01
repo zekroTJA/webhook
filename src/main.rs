@@ -157,13 +157,21 @@ async fn handler(
         cmd.envs(env);
     }
 
-    let output = cmd
-        .output()
+    if hook.show_output {
+        let output = cmd
+            .output()
+            .map_err(|e| ResponseError::InternalServerError(e.to_string()))?;
+
+        let res = output
+            .try_into()
+            .map_err(|e: anyhow::Error| ResponseError::InternalServerError(e.to_string()))?;
+
+        return Ok(Json(res));
+    }
+
+    let status = cmd
+        .status()
         .map_err(|e| ResponseError::InternalServerError(e.to_string()))?;
 
-    let res = output
-        .try_into()
-        .map_err(|e: anyhow::Error| ResponseError::InternalServerError(e.to_string()))?;
-
-    Ok(Json(res))
+    Ok(Json(status.into()))
 }

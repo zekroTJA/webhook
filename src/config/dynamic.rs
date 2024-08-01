@@ -35,6 +35,8 @@ pub struct Hook {
     pub auth: Option<Vec<String>>,
     pub args: Option<Vec<String>>,
     pub env: Option<HashMap<String, String>>,
+    #[serde(default)]
+    pub show_output: bool,
 }
 
 impl ParseFromFile for DynamicConfig {}
