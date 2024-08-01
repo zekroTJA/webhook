@@ -14,7 +14,7 @@ use axum::{
 use clap::Parser;
 use config::{DynamicConfig, Loader, ParseFromFile, StaticConfig};
 use model::CommandResult;
-use std::{path::PathBuf, process::Command, sync::Arc};
+use std::{path::PathBuf, process::Command, str::FromStr, sync::Arc};
 use tower_http::trace::TraceLayer;
 use tracing::{debug, info};
 
@@ -34,12 +34,18 @@ struct Cli {
 async fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
 
-    tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::DEBUG)
-        .with_writer(std::io::stderr)
-        .init();
-
     let config = StaticConfig::from_file(cli.static_conf)?;
+
+    let log_level = config
+        .logging
+        .and_then(|l| l.level)
+        .map(|l| tracing::Level::from_str(&l))
+        .transpose()?
+        .unwrap_or(tracing::Level::INFO);
+    tracing_subscriber::fmt()
+        .with_max_level(log_level)
+        .with_writer(std::io::stdout)
+        .init();
 
     let server_address = config
         .server

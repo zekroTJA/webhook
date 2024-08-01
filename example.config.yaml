@@ -1,2 +1,5 @@
 server:
   address: localhost:8080
+
+logging:
+  level: debug
